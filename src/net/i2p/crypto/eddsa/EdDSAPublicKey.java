@@ -40,7 +40,7 @@ import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec;
 public class EdDSAPublicKey implements EdDSAKey, PublicKey {
     private static final long serialVersionUID = 9837459837498475L;
     private final GroupElement A;
-    private final GroupElement Aneg;
+    private GroupElement Aneg = null;
     private final byte[] Abyte;
     private final EdDSAParameterSpec edDsaSpec;
 
@@ -52,7 +52,6 @@ public class EdDSAPublicKey implements EdDSAKey, PublicKey {
 
     public EdDSAPublicKey(EdDSAPublicKeySpec spec) {
         this.A = spec.getA();
-        this.Aneg = spec.getNegativeA();
         this.Abyte = this.A.toByteArray();
         this.edDsaSpec = spec.getParams();
     }
@@ -78,10 +77,10 @@ public class EdDSAPublicKey implements EdDSAKey, PublicKey {
      * This implements the following specs:
      *<ul><li>
      * General encoding: https://tools.ietf.org/html/draft-ietf-curdle-pkix-04
-     *</li></li>
+     *</li><li>
      * Key encoding: https://tools.ietf.org/html/rfc8032
      *</li></ul>
-     *</p><p>
+     *<p>
      * For keys in older formats, decoding and then re-encoding is sufficient to
      * migrate them to the canonical encoding.
      *</p>
@@ -250,6 +249,12 @@ public class EdDSAPublicKey implements EdDSAKey, PublicKey {
     }
 
     public GroupElement getNegativeA() {
+        synchronized (this) {
+            if (Aneg == null) {
+                Aneg = A.negate();
+                Aneg.precompute(false);
+            }
+        }
         return Aneg;
     }
 
